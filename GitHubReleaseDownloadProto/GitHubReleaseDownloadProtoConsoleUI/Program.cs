@@ -1,20 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
-using Octokit;
 using System.Net;
-using System.IO;
-using System.Net.Http;
-using Newtonsoft;
-using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using RestSharp;
-using Newtonsoft.Json.Linq;
-using Markdig;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using Octokit;
 
 namespace GitHubReleaseDownloadProtoConsoleUI
 {
@@ -23,7 +14,7 @@ namespace GitHubReleaseDownloadProtoConsoleUI
 
         public static void Main(string[] args)
         {
-            string token = "ad3d79eb08dfe0b07cd3c245a4b7065d577b8123"; // Olaaf's personal token
+            string token = ""; // Olaaf's personal token
             string clientAppName = "LPWatchdog";
             string accountOwner = "olaafrossi";
             string workingRepo = "or.github-release-proto";
@@ -40,16 +31,13 @@ namespace GitHubReleaseDownloadProtoConsoleUI
             // connects to a specific repo/release
             var myRelease = ConnectGitHubRepoRelease(client, accountOwner, workingRepo);
 
-            Thread.Sleep(5000);
             // hold here
             Console.ReadLine();
-
-
         }
 
         public static GitHubClient GetGitHubConnection(string token, string clientAppName)
         {
-            var tokenAuth = new Credentials(token); 
+            var tokenAuth = new Credentials(token);
             var output = new GitHubClient(new Octokit.ProductHeaderValue(clientAppName));
             output.Credentials = tokenAuth;
             return output;
@@ -119,18 +107,10 @@ namespace GitHubReleaseDownloadProtoConsoleUI
                 Console.WriteLine($"latestasset info: {item}");
             }
 
-            Console.WriteLine("printing the body again");
-            Console.WriteLine(latestAsset.Body);
+            // parse the body of text to array of words in order to extract a URL/image
+            string[] words = latestAsset.Body.Split('(').ToArray();
 
-
-            string text = latestAsset.Body;
-
-            // text to array of words
-            string[] words = text.Split('(').ToArray();
-
-            // printing
-            Console.WriteLine("Output:");
-            string str1 = "";
+            string str1 = String.Empty;
             foreach (string str in words)
             {
                 if (IsUrl(str))
@@ -139,16 +119,6 @@ namespace GitHubReleaseDownloadProtoConsoleUI
                     Console.WriteLine(str1);
                 }
             }
-
-            using (WebClient wc1 = new WebClient())
-            {
-
-                wc1.DownloadFile(firstAsset.BrowserDownloadUrl, sb.ToString());
-
-            }
-
-            Console.WriteLine();
-
 
             var firstAsset = latestAsset.Assets[0];
 
@@ -171,22 +141,21 @@ namespace GitHubReleaseDownloadProtoConsoleUI
             {
                 Console.WriteLine($"asset info: {item}");
             }
-            Console.WriteLine("whattt");
-            string assetFilePath = @"c:\temp\";
-            string assetFileName = firstAsset.Name;
-            StringBuilder sb = new StringBuilder();
-            sb.Append(assetFilePath);
-            sb.Append(assetFileName);
 
-            Console.WriteLine(sb);
+            string assetFilePath = @"c:\temp\";
+            string assetFilePathName = $"{assetFilePath}{firstAsset.Name}";
+            string assetImageFilePathName = $"{assetFilePath} image.jpg";
+
+            Console.WriteLine(assetFilePathName);
             Console.WriteLine("trying the web client");
 
             using (WebClient wc = new WebClient())
             {
-                wc.DownloadProgressChanged += wc_DownloadProgressChanged;
+                //wc.DownloadProgressChanged += wc_DownloadProgressChanged;
                 //wc.DownloadFileCompleted += wc_DownloadFileCompleted;
-                wc.DownloadFile(firstAsset.BrowserDownloadUrl, sb.ToString());
-
+                wc.DownloadFile(firstAsset.BrowserDownloadUrl, assetFilePathName);
+                wc.DownloadFile(str1, assetImageFilePathName);
+                Console.WriteLine("finsihed the web client");
             }
 
             return firstAssetInfo;
