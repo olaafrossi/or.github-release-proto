@@ -13,6 +13,8 @@ using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using RestSharp;
 using Newtonsoft.Json.Linq;
+using Markdig;
+using System.Text.RegularExpressions;
 
 namespace GitHubReleaseDownloadProtoConsoleUI
 {
@@ -117,6 +119,36 @@ namespace GitHubReleaseDownloadProtoConsoleUI
                 Console.WriteLine($"latestasset info: {item}");
             }
 
+            Console.WriteLine("printing the body again");
+            Console.WriteLine(latestAsset.Body);
+
+
+            string text = latestAsset.Body;
+
+            // text to array of words
+            string[] words = text.Split('(').ToArray();
+
+            // printing
+            Console.WriteLine("Output:");
+            string str1 = "";
+            foreach (string str in words)
+            {
+                if (IsUrl(str))
+                {
+                    str1 = str.Remove(str.Length - 1);
+                    Console.WriteLine(str1);
+                }
+            }
+
+            using (WebClient wc1 = new WebClient())
+            {
+
+                wc1.DownloadFile(firstAsset.BrowserDownloadUrl, sb.ToString());
+
+            }
+
+            Console.WriteLine();
+
 
             var firstAsset = latestAsset.Assets[0];
 
@@ -140,53 +172,40 @@ namespace GitHubReleaseDownloadProtoConsoleUI
                 Console.WriteLine($"asset info: {item}");
             }
             Console.WriteLine("whattt");
-            string desktopPath = @"c:\temp";
+            string assetFilePath = @"c:\temp\";
+            string assetFileName = firstAsset.Name;
+            StringBuilder sb = new StringBuilder();
+            sb.Append(assetFilePath);
+            sb.Append(assetFileName);
 
+            Console.WriteLine(sb);
             Console.WriteLine("trying the web client");
 
             using (WebClient wc = new WebClient())
-                {
+            {
+                wc.DownloadProgressChanged += wc_DownloadProgressChanged;
+                //wc.DownloadFileCompleted += wc_DownloadFileCompleted;
+                wc.DownloadFile(firstAsset.BrowserDownloadUrl, sb.ToString());
 
-                //wc.DownloadProgressChanged += wc_DownloadProgressChanged;
-                // wc.DownloadFileCompleted += wc_DownloadFileCompleted;
-                Console.WriteLine("try the download");
-                    wc.DownloadFileAsync(new Uri(firstAsset.BrowserDownloadUrl), firstAsset.Name);
-                    //wc.DownloadFileAsync(new Uri(firstAsset.BrowserDownloadUrl, firstAsset.Label));
-                }
+            }
 
             return firstAssetInfo;
         }
 
-        /// <summary>
-        ///  Show the progress of the download in a progressbar
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        //private static void wc_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
-        //{
-        //    // In case you don't have a progressBar Log the value instead 
-        //     Console.WriteLine(e.ProgressPercentage);
-        //    //progressBar1.Value = e.ProgressPercentage;
-        //}
+        private static bool IsUrl(string url)
+        {
+            string pattern = @"((https|ftp|file)\://|www.)[A-Za-z0-9\.\-]+(/[A-Za-z0-9\?\&\=;\+!'\(\)\*\-\._~%]*)*";
+            Regex reg = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            return reg.IsMatch(url);
+        }
 
-        //private void wc_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
-        //{
-        //    progressBar1.Value = 0;
+        private static void wc_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        {
 
-        //    if (e.Cancelled)
-        //    {
-        //        MessageBox.Show("The download has been cancelled");
-        //        return;
-        //    }
+            Console.WriteLine("trying thr event handler");
+            Console.WriteLine(e.ProgressPercentage);
 
-        //    if (e.Error != null) // We have an error! Retry a few times, then abort.
-        //    {
-        //        MessageBox.Show("An error ocurred while trying to download file");
+        }
 
-        //        return;
-        //    }
-
-        //    MessageBox.Show("File succesfully downloaded");
-        //}
     }
 }
