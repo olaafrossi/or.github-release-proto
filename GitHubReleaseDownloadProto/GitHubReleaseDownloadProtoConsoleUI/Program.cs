@@ -14,8 +14,8 @@ namespace GitHubReleaseDownloadProtoConsoleUI
 
         public static void Main(string[] args)
         {
-            string token = ""; // Olaaf's personal token
-            string clientAppName = "LPWatchdog";
+            string token = "92ce96b7cd79da7a7b010a54858fb3fc2a3b4336"; // Olaaf's personal token
+            string clientAppName = "LPWatchdog2";
             string accountOwner = "olaafrossi";
             string workingRepo = "or.github-release-proto";
 
